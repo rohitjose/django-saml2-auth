@@ -22,6 +22,8 @@ from django.template import TemplateDoesNotExist
 from django.http import HttpResponseRedirect
 from django.utils.http import is_safe_url
 
+import re
+
 try:
     import urllib2 as _urllib
 except:
@@ -63,14 +65,13 @@ def get_reverse(objs):
 
 def _get_saml_client(domain):
     acs_url = domain + get_reverse([acs, 'acs', 'django_saml2_auth:acs'])
-
+    import tempfile, os
+    f = tempfile.NamedTemporaryFile(mode='wb', delete=False)
+    f.write(_urllib.urlopen(settings.SAML2_AUTH['METADATA_AUTO_CONF_URL']).read())
+    f.close()
     saml_settings = {
         'metadata': {
-            'remote': [
-                {
-                    "url": settings.SAML2_AUTH['METADATA_AUTO_CONF_URL'],
-                },
-            ],
+            'local': [f.name],
         },
         'service': {
             'sp': {
@@ -87,12 +88,14 @@ def _get_saml_client(domain):
                 'want_response_signed': False,
             },
         },
+        'entityid': acs_url,
     }
 
     spConfig = Saml2Config()
     spConfig.load(saml_settings)
     spConfig.allow_unknown_attributes = True
     saml_client = Saml2Client(config=spConfig)
+    os.unlink(f.name)
     return saml_client
 
 
