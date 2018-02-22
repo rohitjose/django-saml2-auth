@@ -89,6 +89,8 @@ def _get_saml_client(domain):
             },
         },
         'entityid': acs_url,
+        'cert_file': settings.SAML2_AUTH.get('CERTIFICATES', {}).get('CERT_FILE', None),
+        'key_file': settings.SAML2_AUTH.get('CERTIFICATES', {}).get('KEY_FILE`', None),
     }
 
     spConfig = Saml2Config()
