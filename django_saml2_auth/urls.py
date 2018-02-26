@@ -7,4 +7,5 @@ urlpatterns = [
     url(r'^acs/$', views.acs, name="acs"),
     url(r'^welcome/$', views.welcome, name="welcome"),
     url(r'^denied/$', views.denied, name="denied"),
+    url(r'config/$',views.config,name="config"),
 ]

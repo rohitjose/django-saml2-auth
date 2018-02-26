@@ -9,6 +9,7 @@ from saml2 import (
 )
 from saml2.client import Saml2Client
 from saml2.config import Config as Saml2Config
+from saml2.metadata import create_metadata_string
 
 from django import get_version
 from pkg_resources import parse_version
@@ -19,7 +20,7 @@ from django.contrib.auth import login, logout
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from django.template import TemplateDoesNotExist
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.utils.http import is_safe_url
 
 import re
@@ -62,16 +63,11 @@ def get_reverse(objs):
             pass
     raise Exception('We got a URL reverse issue: %s. This is a known issue but please still submit a ticket at https://github.com/fangli/django-saml2-auth/issues/new' % str(objs))
 
-
-def _get_saml_client(domain):
-    acs_url = domain + get_reverse([acs, 'acs', 'django_saml2_auth:acs'])
-    import tempfile, os
-    f = tempfile.NamedTemporaryFile(mode='wb', delete=False)
-    f.write(_urllib.urlopen(settings.SAML2_AUTH['METADATA_AUTO_CONF_URL']).read())
-    f.close()
+def _get_saml_client_settings(file_name, acs_url):
+    '''Returns the SAML settings to setup the client and generate the metadata'''
     saml_settings = {
         'metadata': {
-            'local': [f.name],
+            'local': [file_name],
         },
         'service': {
             'sp': {
@@ -91,10 +87,21 @@ def _get_saml_client(domain):
         'entityid': acs_url,
         'cert_file': settings.SAML2_AUTH.get('CERTIFICATES', {}).get('CERT_FILE', None),
         'key_file': settings.SAML2_AUTH.get('CERTIFICATES', {}).get('KEY_FILE`', None),
+	    'encryption_keypairs': [{'cert_file': settings.SAML2_AUTH.get('CERTIFICATES', {}).get('CERT_FILE', None)}],
     }
 
+    return saml_settings
+
+
+def _get_saml_client(domain):
+    acs_url = domain + get_reverse([acs, 'acs', 'django_saml2_auth:acs'])
+    import tempfile, os
+    f = tempfile.NamedTemporaryFile(mode='wb', delete=False)
+    f.write(_urllib.urlopen(settings.SAML2_AUTH['METADATA_AUTO_CONF_URL']).read())
+    f.close()
+
     spConfig = Saml2Config()
-    spConfig.load(saml_settings)
+    spConfig.load(_get_saml_client_settings(f.name, acs_url))
     spConfig.allow_unknown_attributes = True
     saml_client = Saml2Client(config=spConfig)
     os.unlink(f.name)
@@ -219,3 +226,17 @@ def signin(r):
 def signout(r):
     logout(r)
     return render(r, 'django_saml2_auth/signout.html')
+
+def config(r):
+    acs_url = get_current_domain(r) + get_reverse([acs, 'acs', 'django_saml2_auth:acs'])
+    import tempfile, os
+    f = tempfile.NamedTemporaryFile(mode='wb', delete=False)
+    f.write(_urllib.urlopen(settings.SAML2_AUTH['METADATA_AUTO_CONF_URL']).read())
+    f.close()
+
+    saml_settings = _get_saml_client_settings(f.name, acs_url)
+    spConfig = Saml2Config()
+    spConfig.load(saml_settings)
+    spConfig.allow_unknown_attributes = True
+    metadata_string = create_metadata_string(None, config=spConfig, valid=settings.SAML2_AUTH.get('CERTIFICATES', {}).get('VALID_THROUGH', None)*24)
+    return HttpResponse(metadata_string, content_type='text/xml')
