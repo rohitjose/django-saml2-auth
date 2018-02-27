@@ -216,7 +216,7 @@ def signin(r):
     r.session['login_next_url'] = next_url
 
     saml_client = _get_saml_client(get_current_domain(r))
-    _, info = saml_client.prepare_for_authenticate()
+    _, info = saml_client.prepare_for_authenticate(nameid_format="")
 
     redirect_url = None
 
