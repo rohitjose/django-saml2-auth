@@ -86,8 +86,13 @@ def _get_saml_client_settings(file_name, acs_url):
         },
         'entityid': acs_url,
         'cert_file': settings.SAML2_AUTH.get('CERTIFICATES', {}).get('CERT_FILE', None),
-        'key_file': settings.SAML2_AUTH.get('CERTIFICATES', {}).get('KEY_FILE`', None),
-	    'encryption_keypairs': [{'cert_file': settings.SAML2_AUTH.get('CERTIFICATES', {}).get('CERT_FILE', None)}],
+        'key_file': settings.SAML2_AUTH.get('CERTIFICATES', {}).get('KEY_FILE', None),
+	    'encryption_keypairs': [
+                                    {
+                                        'cert_file': settings.SAML2_AUTH.get('CERTIFICATES', {}).get('CERT_FILE', None),
+                                        'key_file': settings.SAML2_AUTH.get('CERTIFICATES', {}).get('KEY_FILE', None),
+                                    }
+                                ],
     }
 
     return saml_settings
@@ -139,7 +144,7 @@ def _create_new_user(username, email, firstname, lastname):
 @csrf_exempt
 def acs(r):
     saml_client = _get_saml_client(get_current_domain(r))
-    resp = r.POST.get('SAMLResponse', None)
+    resp = r.POST.get('SAMLResponse', None) 
     next_url = r.session.get('login_next_url', settings.SAML2_AUTH.get('DEFAULT_NEXT_URL', get_reverse('admin:index')))
 
     if not resp:
