@@ -67,7 +67,11 @@ def _get_saml_client_settings(file_name, acs_url):
     '''Returns the SAML settings to setup the client and generate the metadata'''
     saml_settings = {
         'metadata': {
-            'local': [file_name],
+            'remote': [
+                {
+                    "url": settings.SAML2_AUTH['METADATA_AUTO_CONF_URL'],
+                },
+            ],
         },
         'service': {
             'sp': {
@@ -144,7 +148,7 @@ def _create_new_user(username, email, firstname, lastname):
 @csrf_exempt
 def acs(r):
     saml_client = _get_saml_client(get_current_domain(r))
-    resp = r.POST.get('SAMLResponse', None) 
+    resp = r.POST.get('SAMLResponse', None)
     next_url = r.session.get('login_next_url', settings.SAML2_AUTH.get('DEFAULT_NEXT_URL', get_reverse('admin:index')))
 
     if not resp:
