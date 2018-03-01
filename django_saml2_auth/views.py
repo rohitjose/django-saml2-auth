@@ -92,10 +92,11 @@ def _get_saml_client_settings(acs_url):
     if 'ENTITY_ID' in settings.SAML2_AUTH:
         saml_settings['entityid'] = settings.SAML2_AUTH['ENTITY_ID']
 
-    # Certificate binding in case of an encrypted payload from th IDP
+    # Certificate binding for an encrypted payload from the IDP
     if 'CERTIFICATES' in settings.SAML2_AUTH:
         saml_settings['cert_file'] = settings.SAML2_AUTH.get('CERTIFICATES', {}).get('CERT_FILE', None)
         saml_settings['key_file']  = settings.SAML2_AUTH.get('CERTIFICATES', {}).get('KEY_FILE', None)
+        saml_settings['encryption_keypairs'] = {}
         saml_settings['encryption_keypairs']['cert_file'] = settings.SAML2_AUTH.get('CERTIFICATES', {}).get('CERT_FILE', None)
         saml_settings['encryption_keypairs']['key_file']  = settings.SAML2_AUTH.get('CERTIFICATES', {}).get('KEY_FILE', None)
 
