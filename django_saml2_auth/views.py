@@ -91,6 +91,8 @@ def _get_saml_client_settings(acs_url):
     # Binding for the Entity ID against ADFS
     if 'ENTITY_ID' in settings.SAML2_AUTH:
         saml_settings['entityid'] = settings.SAML2_AUTH['ENTITY_ID']
+    else:
+        saml_settings['entityid'] = acs_url
 
     # Certificate binding for an encrypted payload from the IDP
     if 'CERTIFICATES' in settings.SAML2_AUTH:
