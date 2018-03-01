@@ -25,3 +25,4 @@ Contributors
 - `Terry <https://github.com/tpeng>`_
 - `Tim Pierce <https://github.com/qwrrty/>`_ (Adobe Systems)
 - `Tonymke <https://github.com/tonymke/>`_
+- `Rohit Jose <https://github.com/rohitjose>`_

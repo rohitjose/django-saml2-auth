@@ -144,11 +144,19 @@ How to use?
                 'CREATE_USER': 'path.to.your.new.user.hook.method',
                 'BEFORE_LOGIN': 'path.to.your.login.hook.method',
             },
+            'CERTIFICATES': {
+                'CERT_FILE': 'path to the certificate file',
+                'KEY_FILE' : 'path to the key file',
+                'VALID_THROUGH': no_of_days # Validity period in terms of number of days for the certificate files
+            }
             'ASSERTION_URL': 'https://mysite.com', # Custom URL to validate incoming SAML requests against
+            'ENTITY_ID': 'https://mysite.com/saml2_auth/acs/', # Populates the Issuer element in authn request
         }
 
 #. In your SAML2 SSO identity provider, set the Single-sign-on URL and Audience
    URI(SP Entity ID) to http://your-domain/saml2_auth/acs/
+#. The metadata is generated dynamically based on the SAML2_AUTH settings specificed
+   on the settings.py file and available under the URL - http://your-domain/saml2_auth/metadata/
 
 
 Explanation
@@ -179,6 +187,10 @@ django-saml2-auth will validate the SAML response's Service Provider address
 against the actual HTTP request's host and scheme. If this value is set, it
 will validate against ASSERTION_URL instead - perfect for when django running 
 behind a reverse proxy.
+
+**ENTITY_ID** The optional entity ID string to be passed in the 'Issuer' element of authn request, if required by the IDP.
+
+**CERTIFICATES** Path to the certificate and key files that handles decrypting the encrypted payload from your IDP
 
 Customize
 =========
