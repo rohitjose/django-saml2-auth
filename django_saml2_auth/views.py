@@ -96,9 +96,12 @@ def _get_saml_client_settings(acs_url):
     if 'CERTIFICATES' in settings.SAML2_AUTH:
         saml_settings['cert_file'] = settings.SAML2_AUTH.get('CERTIFICATES', {}).get('CERT_FILE', None)
         saml_settings['key_file']  = settings.SAML2_AUTH.get('CERTIFICATES', {}).get('KEY_FILE', None)
-        saml_settings['encryption_keypairs'] = {}
-        saml_settings['encryption_keypairs']['cert_file'] = settings.SAML2_AUTH.get('CERTIFICATES', {}).get('CERT_FILE', None)
-        saml_settings['encryption_keypairs']['key_file']  = settings.SAML2_AUTH.get('CERTIFICATES', {}).get('KEY_FILE', None)
+        saml_settings['encryption_keypairs'] = [
+                                                    {
+                                                        'cert_file': settings.SAML2_AUTH.get('CERTIFICATES', {}).get('CERT_FILE', None),
+                                                        'key_file': settings.SAML2_AUTH.get('CERTIFICATES', {}).get('KEY_FILE', None),
+                                                    }
+                                               ]
 
     return saml_settings
 
