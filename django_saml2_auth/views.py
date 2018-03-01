@@ -23,8 +23,6 @@ from django.template import TemplateDoesNotExist
 from django.http import HttpResponseRedirect, HttpResponse
 from django.utils.http import is_safe_url
 
-import re
-
 try:
     import urllib2 as _urllib
 except:
@@ -63,7 +61,7 @@ def get_reverse(objs):
             pass
     raise Exception('We got a URL reverse issue: %s. This is a known issue but please still submit a ticket at https://github.com/fangli/django-saml2-auth/issues/new' % str(objs))
 
-def _get_saml_client_settings(file_name, acs_url):
+def _get_saml_client_settings(acs_url):
     '''Returns the SAML settings to setup the client and generate the metadata'''
     saml_settings = {
         'metadata': {
@@ -88,32 +86,29 @@ def _get_saml_client_settings(file_name, acs_url):
                 'want_response_signed': False,
             },
         },
-        'entityid': acs_url,
-        'cert_file': settings.SAML2_AUTH.get('CERTIFICATES', {}).get('CERT_FILE', None),
-        'key_file': settings.SAML2_AUTH.get('CERTIFICATES', {}).get('KEY_FILE', None),
-	    'encryption_keypairs': [
-                                    {
-                                        'cert_file': settings.SAML2_AUTH.get('CERTIFICATES', {}).get('CERT_FILE', None),
-                                        'key_file': settings.SAML2_AUTH.get('CERTIFICATES', {}).get('KEY_FILE', None),
-                                    }
-                                ],
     }
+
+    # Binding for the Entity ID against ADFS
+    if 'ENTITY_ID' in settings.SAML2_AUTH:
+        saml_settings['entityid'] = settings.SAML2_AUTH['ENTITY_ID']
+
+    # Certificate binding in case of an encrypted payload from th IDP
+    if 'CERTIFICATES' in settings.SAML2_AUTH:
+        saml_settings['cert_file'] = settings.SAML2_AUTH.get('CERTIFICATES', {}).get('CERT_FILE', None)
+        saml_settings['key_file']  = settings.SAML2_AUTH.get('CERTIFICATES', {}).get('KEY_FILE', None)
+        saml_settings['encryption_keypairs']['cert_file'] = settings.SAML2_AUTH.get('CERTIFICATES', {}).get('CERT_FILE', None)
+        saml_settings['encryption_keypairs']['key_file']  = settings.SAML2_AUTH.get('CERTIFICATES', {}).get('KEY_FILE', None)
 
     return saml_settings
 
 
 def _get_saml_client(domain):
     acs_url = domain + get_reverse([acs, 'acs', 'django_saml2_auth:acs'])
-    import tempfile, os
-    f = tempfile.NamedTemporaryFile(mode='wb', delete=False)
-    f.write(_urllib.urlopen(settings.SAML2_AUTH['METADATA_AUTO_CONF_URL']).read())
-    f.close()
 
     spConfig = Saml2Config()
-    spConfig.load(_get_saml_client_settings(f.name, acs_url))
+    spConfig.load(_get_saml_client_settings(acs_url))
     spConfig.allow_unknown_attributes = True
     saml_client = Saml2Client(config=spConfig)
-    os.unlink(f.name)
     return saml_client
 
 
@@ -236,14 +231,10 @@ def signout(r):
     logout(r)
     return render(r, 'django_saml2_auth/signout.html')
 
-def config(r):
+def metadata(r):
     acs_url = get_current_domain(r) + get_reverse([acs, 'acs', 'django_saml2_auth:acs'])
-    import tempfile, os
-    f = tempfile.NamedTemporaryFile(mode='wb', delete=False)
-    f.write(_urllib.urlopen(settings.SAML2_AUTH['METADATA_AUTO_CONF_URL']).read())
-    f.close()
 
-    saml_settings = _get_saml_client_settings(f.name, acs_url)
+    saml_settings = _get_saml_client_settings(acs_url)
     spConfig = Saml2Config()
     spConfig.load(saml_settings)
     spConfig.allow_unknown_attributes = True
